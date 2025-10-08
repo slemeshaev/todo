@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	todo "github.com/slemeshaev/todo/internal"
+	todo "github.com/slemeshaev/todo/internal/service"
 )
 
 func main() {
