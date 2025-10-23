@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	_ "github.com/lib/pq"
+
 	"github.com/slemeshaev/todo/internal/handler"
 	"github.com/slemeshaev/todo/internal/repository"
 	todo "github.com/slemeshaev/todo/internal/server"
