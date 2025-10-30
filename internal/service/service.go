@@ -1,8 +1,12 @@
 package service
 
-import "github.com/slemeshaev/todo/internal/repository"
+import (
+	todo "github.com/slemeshaev/todo/internal/models"
+	"github.com/slemeshaev/todo/internal/repository"
+)
 
 type Authorization interface {
+	CreateUser(user todo.User) (int, error)
 }
 
 type TodoList interface {
