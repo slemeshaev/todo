@@ -21,8 +21,8 @@ func (h *Handler) createList(c *gin.Context) {
 		return
 	}
 
-	// call serivice method
-	fmt.Println(id)
+	id, err := h.services.TodoList.Create(id.(int), input)
+	fmt.Println(id, err)
 }
 
 func (h *Handler) getAllLists(c *gin.Context) {
