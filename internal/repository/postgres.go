@@ -11,7 +11,7 @@ const (
 	todoListsTable  = "todo_lists"
 	usersListsTable = "users_lists"
 	todoItemsTable  = "todo_items"
-	listItemsTable  = "lists_items"
+	listItemsTable  = "list_items"
 )
 
 type Config struct {
