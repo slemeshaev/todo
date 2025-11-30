@@ -11,7 +11,6 @@ A RESTful API for task management with JWT authentication and authorization.
 - **Configuration**: Viper, Environment Variables
 - **Logging**: Logrus
 
-
 ## 🎯 Project Goals
 
 - Provide secure and scalable task management API
