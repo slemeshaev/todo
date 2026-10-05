@@ -55,9 +55,9 @@ func main() {
 	services := service.NewService(repos)
 	handlers := handler.NewHandler(services)
 
-	srv := new(todo.Server)
+	srv := todo.NewServer(viper.GetString("port"), handlers.InitRouters())
 	go func() {
-		if err := srv.Run(viper.GetString("port"), handlers.InitRouters()); err != nil {
+		if err := srv.Run(); err != nil {
 			logrus.Fatalf("error occured while running http-server: %s", err.Error())
 		}
 	}()
