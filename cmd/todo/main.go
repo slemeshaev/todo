@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -57,7 +59,7 @@ func main() {
 
 	srv := todo.NewServer(viper.GetString("port"), handlers.InitRouters())
 	go func() {
-		if err := srv.Run(); err != nil {
+		if err := srv.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logrus.Fatalf("error occured while running http-server: %s", err.Error())
 		}
 	}()
