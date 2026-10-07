@@ -58,6 +58,10 @@ func main() {
 	handlers := handler.NewHandler(services)
 
 	srv := todo.NewServer(viper.GetString("port"), handlers.InitRouters())
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	go func() {
 		if err := srv.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logrus.Fatalf("error occured while running http-server: %s", err.Error())
@@ -65,12 +69,10 @@ func main() {
 	}()
 
 	logrus.Println("Todo Started...")
+	<-ctx.Done()
+	stop()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
-	<-quit
-
-	logrus.Print("Todo Shutting Down")
+	logrus.Print("Todo Shutting Down...")
 
 	if err := srv.Shutdown(context.Background()); err != nil {
 		logrus.Errorf("error occured on server sutting down: %s", err.Error())
