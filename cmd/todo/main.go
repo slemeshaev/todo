@@ -62,17 +62,26 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	errCh := make(chan error, 1)
 	go func() {
 		if err := srv.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logrus.Fatalf("error occured while running http-server: %s", err.Error())
+			errCh <- err
 		}
 	}()
 
 	logrus.Println("Todo Started...")
-	<-ctx.Done()
-	stop()
 
-	logrus.Print("Todo Shutting Down...")
+	exitCode := 0
+
+	select {
+	case <-ctx.Done():
+		logrus.Print("Todo Shutting Down...")
+	case err := <-errCh:
+		exitCode = 1
+		logrus.Errorf("error occured while running http-server: %s", err)
+	}
+
+	stop()
 
 	if err := srv.Shutdown(context.Background()); err != nil {
 		logrus.Errorf("error occured on server sutting down: %s", err.Error())
@@ -81,6 +90,9 @@ func main() {
 	if err := db.Close(); err != nil {
 		logrus.Errorf("error occured on db connection close: %s", err.Error())
 	}
+
+	logrus.Print("Todo Stopped...")
+	os.Exit(exitCode)
 }
 
 func initConfig() error {
