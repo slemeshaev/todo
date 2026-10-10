@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/sirupsen/logrus"
 
 	"github.com/slemeshaev/todo/internal/handler"
 	"github.com/slemeshaev/todo/internal/repository"
@@ -32,14 +32,16 @@ import (
 // @name Authorization
 
 func main() {
-	logrus.SetFormatter(new(logrus.JSONFormatter))
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
 	if err := initConfig(); err != nil {
-		logrus.Fatalf("error initializing configs: %s", err.Error())
+		slog.Error("failed to init config", "err", err)
+		os.Exit(1)
 	}
 
 	if err := godotenv.Load(); err != nil {
-		logrus.Fatalf("error loading env variables: %s", err.Error())
+		slog.Error("failed to load env", "err", err)
+		os.Exit(1)
 	}
 
 	db, err := repository.NewPostgresDB(repository.Config{
@@ -51,7 +53,8 @@ func main() {
 		Password: os.Getenv("DB_PASSWORD"),
 	})
 	if err != nil {
-		logrus.Fatalf("Failed to initialize db: %s", err.Error())
+		slog.Error("failed to init db", "err", err)
+		os.Exit(1)
 	}
 
 	repos := repository.NewRepository(db)
@@ -70,16 +73,16 @@ func main() {
 		}
 	}()
 
-	logrus.Println("Todo Started...")
+	slog.Info("server started", "port", viper.GetString("port"))
 
 	exitCode := 0
 
 	select {
 	case <-ctx.Done():
-		logrus.Print("Todo Shutting Down...")
+		slog.Info("server shutting down")
 	case err := <-errCh:
 		exitCode = 1
-		logrus.Errorf("error occured while running http-server: %s", err)
+		slog.Error("http server failed", "err", err)
 	}
 
 	stop()
@@ -88,14 +91,14 @@ func main() {
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logrus.Errorf("error occured on server sutting down: %s", err.Error())
+		slog.Error("shutdown failed", "err", err)
 	}
 
 	if err := db.Close(); err != nil {
-		logrus.Errorf("error occured on db connection close: %s", err.Error())
+		slog.Error("db close failed", "err", err)
 	}
 
-	logrus.Print("Todo Stopped...")
+	slog.Info("server stopped")
 	os.Exit(exitCode)
 }
 
