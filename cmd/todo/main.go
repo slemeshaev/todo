@@ -39,7 +39,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
 		slog.Error("failed to load env", "err", err)
 		os.Exit(1)
 	}
