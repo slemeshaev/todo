@@ -44,13 +44,39 @@ func main() {
 		os.Exit(1)
 	}
 
+	dbPassword := os.Getenv("DB_PASSWORD")
+	jwtKey := os.Getenv("JWT_SIGNING_KEY")
+
+	var missing []string
+
+	if dbPassword == "" {
+		missing = append(missing, "DB_PASSWORD")
+	}
+
+	if jwtKey == "" {
+		missing = append(missing, "JWT_SIGNING_KEY")
+	}
+
+	if len(missing) > 0 {
+		slog.Error("missing required env", "vars", missing)
+		os.Exit(1)
+	}
+
+	// HS256 requires a key of at least 256 bits (RFC 7518, section 3.2).
+	const minJWTKeyLen = 32
+
+	if len(jwtKey) < minJWTKeyLen {
+		slog.Error("JWT_SIGNING_KEY is too short", "min", minJWTKeyLen, "got", len(jwtKey))
+		os.Exit(1)
+	}
+
 	db, err := repository.NewPostgresDB(repository.Config{
 		Host:     viper.GetString("db.host"),
 		Port:     viper.GetString("db.port"),
 		Username: viper.GetString("db.username"),
 		DBName:   viper.GetString("db.dbname"),
 		SSLMode:  viper.GetString("db.sslmode"),
-		Password: os.Getenv("DB_PASSWORD"),
+		Password: dbPassword,
 	})
 	if err != nil {
 		slog.Error("failed to init db", "err", err)
