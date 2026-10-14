@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	salt       = "jdkafjajl84uo8afsf44fafadfg"
-	signingKey = "fajdklfjl48fua9ha9fhafh"
-	tokenTTL   = 12 * time.Hour
+	salt     = "jdkafjajl84uo8afsf44fafadfg"
+	tokenTTL = 12 * time.Hour
 )
 
 type AuthService struct {
-	repo repository.Authorization
+	repo       repository.Authorization
+	signingKey []byte
 }
 
 type tokenClaims struct {
@@ -26,8 +26,8 @@ type tokenClaims struct {
 	UserId int `json:"user_id"`
 }
 
-func NewAuthService(repo repository.Authorization) *AuthService {
-	return &AuthService{repo: repo}
+func NewAuthService(repo repository.Authorization, signingKey string) *AuthService {
+	return &AuthService{repo: repo, signingKey: []byte(signingKey)}
 }
 
 func (s *AuthService) CreateUser(user todo.User) (int, error) {
@@ -49,7 +49,7 @@ func (s *AuthService) GenerateToken(username, password string) (string, error) {
 		user.Id,
 	})
 
-	return token.SignedString([]byte(signingKey))
+	return token.SignedString(s.signingKey)
 }
 
 func (s *AuthService) ParseToken(accessToken string) (int, error) {
@@ -58,7 +58,7 @@ func (s *AuthService) ParseToken(accessToken string) (int, error) {
 			return nil, errors.New("invalid signing method")
 		}
 
-		return []byte(signingKey), nil
+		return s.signingKey, nil
 	})
 
 	if err != nil {

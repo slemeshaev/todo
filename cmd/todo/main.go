@@ -84,7 +84,7 @@ func main() {
 	}
 
 	repos := repository.NewRepository(db)
-	services := service.NewService(repos)
+	services := service.NewService(repos, jwtKey)
 	handlers := handler.NewHandler(services)
 
 	srv := todo.NewServer(viper.GetString("port"), handlers.InitRouters())
