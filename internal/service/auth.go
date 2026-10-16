@@ -16,6 +16,8 @@ const (
 	tokenTTL = 12 * time.Hour
 )
 
+var errInvalidCredentials = errors.New("invalid username or password")
+
 type AuthService struct {
 	repo       repository.Authorization
 	signingKey []byte
@@ -36,9 +38,13 @@ func (s *AuthService) CreateUser(user todo.User) (int, error) {
 }
 
 func (s *AuthService) GenerateToken(username, password string) (string, error) {
-	user, err := s.repo.GetUser(username, generatePasswordHash(password))
+	user, err := s.repo.GetUser(username)
 	if err != nil {
-		return "", err
+		return "", errInvalidCredentials
+	}
+
+	if generatePasswordHash(password) != user.Password {
+		return "", errInvalidCredentials
 	}
 
 	now := time.Now()
