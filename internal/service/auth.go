@@ -14,7 +14,10 @@ import (
 
 const tokenTTL = 12 * time.Hour
 
-var errInvalidCredentials = errors.New("invalid username or password")
+var (
+	errInvalidCredentials = errors.New("invalid username or password")
+	dummyHash             = mustHash("")
+)
 
 type AuthService struct {
 	repo       repository.Authorization
@@ -44,6 +47,8 @@ func (s *AuthService) GenerateToken(username, password string) (string, error) {
 	user, err := s.repo.GetUser(username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			// Spend the same time as a real check so the response time does not reveal unknown usernames.
+			_ = bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
 			return "", errInvalidCredentials
 		}
 		return "", fmt.Errorf("get user: %w", err)
@@ -84,4 +89,13 @@ func (s *AuthService) ParseToken(accessToken string) (int, error) {
 	}
 
 	return claims.UserId, nil
+}
+
+func mustHash(password string) []byte {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		panic(fmt.Sprintf("generate dummy hash: %v", err))
+	}
+
+	return hash
 }
