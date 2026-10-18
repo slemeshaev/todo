@@ -1,7 +1,6 @@
 package service
 
 import (
-	"crypto/sha1"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -10,12 +9,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	todo "github.com/slemeshaev/todo/internal/models"
 	"github.com/slemeshaev/todo/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	salt     = "jdkafjajl84uo8afsf44fafadfg"
-	tokenTTL = 12 * time.Hour
-)
+const tokenTTL = 12 * time.Hour
 
 var errInvalidCredentials = errors.New("invalid username or password")
 
@@ -34,7 +31,12 @@ func NewAuthService(repo repository.Authorization, signingKey string) *AuthServi
 }
 
 func (s *AuthService) CreateUser(user todo.User) (int, error) {
-	user.Password = generatePasswordHash(user.Password)
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, fmt.Errorf("hash password: %w", err)
+	}
+	user.Password = string(hash)
+
 	return s.repo.CreateUser(user)
 }
 
@@ -47,7 +49,7 @@ func (s *AuthService) GenerateToken(username, password string) (string, error) {
 		return "", fmt.Errorf("get user: %w", err)
 	}
 
-	if generatePasswordHash(password) != user.Password {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return "", errInvalidCredentials
 	}
 
@@ -82,11 +84,4 @@ func (s *AuthService) ParseToken(accessToken string) (int, error) {
 	}
 
 	return claims.UserId, nil
-}
-
-func generatePasswordHash(password string) string {
-	hash := sha1.New()
-	hash.Write([]byte(password))
-
-	return fmt.Sprintf("%x", hash.Sum([]byte(salt)))
 }
