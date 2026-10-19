@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	todo "github.com/slemeshaev/todo/internal/models"
 	"github.com/slemeshaev/todo/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -25,7 +25,7 @@ type AuthService struct {
 }
 
 type tokenClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	UserId int `json:"user_id"`
 }
 
@@ -60,9 +60,9 @@ func (s *AuthService) GenerateToken(username, password string) (string, error) {
 
 	now := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
-		jwt.StandardClaims{
-			ExpiresAt: now.Add(tokenTTL).Unix(),
-			IssuedAt:  now.Unix(),
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(now.Add(tokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(now),
 		},
 		user.Id,
 	})
