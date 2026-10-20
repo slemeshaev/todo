@@ -1,37 +1,66 @@
-# Todo App Backend API
+# todo
 
-A RESTful API for task management with JWT authentication and authorization.
+REST API for task management in Go: users sign up, sign in with JWT and manage their lists and items.
 
-## 🚀 Tech Stack
+> Work in progress: tests, Docker and CI are coming next.
 
-- **Backend**: Go 1.24, Gin Framework
-- **Database**: PostgreSQL
-- **Authentication**: JWT Tokens
-- **Documentation**: Swagger
-- **Configuration**: Viper, Environment Variables
-- **Logging**: Logrus
+## Stack
 
-## 🎯 Project Goals
+- Go, Gin
+- PostgreSQL, sqlx, SQL migrations
+- JWT (golang-jwt/jwt v5), bcrypt for passwords
+- Viper for config, secrets from environment variables
+- log/slog for structured JSON logs
+- Swagger for API docs
 
-- Provide secure and scalable task management API
-- Demonstrate clean architecture principles
-- Implement proper authentication/authorization
-- Offer comprehensive API documentation
-- Ensure code maintainability and testability
+## What's inside
 
-## 🛠 Requirements
-- Go 1.24 or higher
-- PostgreSQL 12+
-- Git
+- Layered structure: handler → service → repository
+- Transactions when a list or an item is created
+- Fail-fast startup: the server refuses to start without required secrets or with a weak JWT key
+- Graceful shutdown on SIGINT / SIGTERM
 
-## 📝 Notes
-- Uses clean architecture pattern (Handler-Service-Repository)
-- Implements transaction support for data consistency
-- Includes graceful shutdown handling
-- Structured JSON logging for better observability
-- Ready for containerization with Docker
+## Run locally
 
-## 📄 License
-This project is licensed under the GPL License - see the LICENSE file for details.
+1. Start PostgreSQL (the config expects port 5436):
 
-⭐ If this project was useful, give a star to the repository.
+   ```bash
+   docker run --name todo-db -e POSTGRES_PASSWORD=yourpassword -p 5436:5432 -d postgres:16
+   ```
+
+2. Apply migrations with [golang-migrate](https://github.com/golang-migrate/migrate):
+
+   ```bash
+   migrate -path ./schema -database "postgres://postgres:yourpassword@localhost:5436/postgres?sslmode=disable" up
+   ```
+
+3. Create `.env` from the example and fill in `DB_PASSWORD` and `JWT_SIGNING_KEY` (how to generate the key is described in `.env.example`):
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Run the server:
+
+   ```bash
+   go run ./cmd/todo
+   ```
+
+API docs: http://localhost:8000/swagger/index.html
+
+## API
+
+| Method | Path | Description |
+|---|---|---|
+| POST | /auth/sign-up | Register a user |
+| POST | /auth/sign-in | Get a JWT |
+| POST, GET | /api/lists/ | Create a list, get all lists |
+| GET, PUT, DELETE | /api/lists/:id | Get, update, delete a list |
+| POST, GET | /api/lists/:id/items/ | Create an item, get all items of a list |
+| GET, PUT, DELETE | /api/items/:id | Get, update, delete an item |
+
+All `/api` routes require the `Authorization: Bearer <token>` header.
+
+## License
+
+GPL-3.0
