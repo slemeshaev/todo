@@ -71,13 +71,13 @@ func (s *AuthService) GenerateToken(username, password string) (string, error) {
 }
 
 func (s *AuthService) ParseToken(accessToken string) (int, error) {
-	token, err := jwt.ParseWithClaims(accessToken, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("invalid signing method")
-		}
-
-		return s.signingKey, nil
-	})
+	token, err := jwt.ParseWithClaims(accessToken, &tokenClaims{},
+		func(token *jwt.Token) (any, error) {
+			return s.signingKey, nil
+		},
+		jwt.WithExpirationRequired(),
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+	)
 
 	if err != nil {
 		return 0, err
