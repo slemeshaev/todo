@@ -11,7 +11,7 @@ REST API for task management in Go: users sign up, sign in with JWT and manage t
 - JWT (golang-jwt/jwt v5), bcrypt for passwords
 - Viper for config, secrets from environment variables
 - log/slog for structured JSON logs
-- Swagger for API docs
+- Swagger UI (endpoint annotations in progress)
 
 ## What's inside
 
@@ -19,6 +19,12 @@ REST API for task management in Go: users sign up, sign in with JWT and manage t
 - Transactions when a list or an item is created
 - Fail-fast startup: the server refuses to start without required secrets or with a weak JWT key
 - Graceful shutdown on SIGINT / SIGTERM
+
+## Requirements
+
+- Go 1.27+
+- Docker
+- [golang-migrate](https://github.com/golang-migrate/migrate)
 
 ## Run locally
 
@@ -44,6 +50,35 @@ REST API for task management in Go: users sign up, sign in with JWT and manage t
 
    ```bash
    go run ./cmd/todo
+   ```
+
+## Quick check
+
+1. Sign-up:
+   ```bash
+   curl -s -X POST http://localhost:8000/auth/sign-up \
+   -H "Content-Type: application/json" \
+   -d '{"name":"Sergey","username":"sergey","password":"secret123"}'
+   # {"id":1}
+   ```
+
+2. Sign-in:
+   ```bash
+   curl -s -X POST http://localhost:8000/auth/sign-in \
+   -H "Content-Type: application/json" \
+   -d '{"username":"sergey","password":"secret123"}'
+   # {"token":"eyJ..."}  — copy the token
+   ```
+
+3. Save the token:
+   ```bash
+   TOKEN=paste_the_token # only the value, without {"token":" and "}
+   ```
+
+4. Get lists:
+   ```bash
+   curl -s http://localhost:8000/api/lists/ -H "Authorization: Bearer $TOKEN"
+   # {"data":null}
    ```
 
 API docs: http://localhost:8000/swagger/index.html
