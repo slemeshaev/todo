@@ -1,8 +1,15 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/jmoiron/sqlx"
 	todo "github.com/slemeshaev/todo/internal/models"
+)
+
+var (
+	ErrNotFound  = errors.New("not found")
+	ErrDuplicate = errors.New("already exists")
 )
 
 type Authorization interface {

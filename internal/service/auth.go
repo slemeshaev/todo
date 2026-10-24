@@ -1,7 +1,6 @@
 package service
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -46,7 +45,7 @@ func (s *AuthService) CreateUser(user todo.User) (int, error) {
 func (s *AuthService) GenerateToken(username, password string) (string, error) {
 	user, err := s.repo.GetUser(username)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, repository.ErrNotFound) {
 			// Spend the same time as a real check so the response time does not reveal unknown usernames.
 			_ = bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
 			return "", errInvalidCredentials
