@@ -1,7 +1,6 @@
 package service
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -15,7 +14,8 @@ import (
 const tokenTTL = 12 * time.Hour
 
 var (
-	errInvalidCredentials = errors.New("invalid username or password")
+	ErrInvalidCredentials = errors.New("invalid username or password")
+	ErrUsernameTaken      = errors.New("username already taken")
 	dummyHash             = mustHash("")
 )
 
@@ -40,22 +40,30 @@ func (s *AuthService) CreateUser(user todo.User) (int, error) {
 	}
 	user.Password = string(hash)
 
-	return s.repo.CreateUser(user)
+	id, err := s.repo.CreateUser(user)
+	if err != nil {
+		if errors.Is(err, repository.ErrDuplicate) {
+			return 0, ErrUsernameTaken
+		}
+		return 0, fmt.Errorf("create user: %w", err)
+	}
+
+	return id, nil
 }
 
 func (s *AuthService) GenerateToken(username, password string) (string, error) {
 	user, err := s.repo.GetUser(username)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, repository.ErrNotFound) {
 			// Spend the same time as a real check so the response time does not reveal unknown usernames.
 			_ = bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
-			return "", errInvalidCredentials
+			return "", ErrInvalidCredentials
 		}
 		return "", fmt.Errorf("get user: %w", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return "", errInvalidCredentials
+		return "", ErrInvalidCredentials
 	}
 
 	now := time.Now()

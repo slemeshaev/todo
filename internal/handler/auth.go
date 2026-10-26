@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	todo "github.com/slemeshaev/todo/internal/models"
+	"github.com/slemeshaev/todo/internal/service"
 )
 
 // @Summary SignUp
@@ -30,11 +32,16 @@ func (h *Handler) signUp(c *gin.Context) {
 
 	id, err := h.services.Authorization.CreateUser(input)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		if errors.Is(err, service.ErrUsernameTaken) {
+			newErrorResponse(c, http.StatusConflict, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]interface{}{
+	c.JSON(http.StatusCreated, map[string]any{
 		"id": id,
 	})
 }
@@ -54,11 +61,16 @@ func (h *Handler) signIn(c *gin.Context) {
 
 	token, err := h.services.Authorization.GenerateToken(input.Username, input.Password)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			newErrorResponse(c, http.StatusUnauthorized, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]interface{}{
+	c.JSON(http.StatusOK, map[string]any{
 		"token": token,
 	})
 }
