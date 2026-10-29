@@ -1,8 +1,15 @@
 package service
 
 import (
+	"errors"
+	"fmt"
+
 	todo "github.com/slemeshaev/todo/internal/models"
 	"github.com/slemeshaev/todo/internal/repository"
+)
+
+var (
+	ErrListNotFound = errors.New("list not found")
 )
 
 type TodoListService struct {
@@ -22,7 +29,15 @@ func (s *TodoListService) GetAll(userId int) ([]todo.TodoList, error) {
 }
 
 func (s *TodoListService) GetById(userId, listId int) (todo.TodoList, error) {
-	return s.repo.GetById(userId, listId)
+	list, err := s.repo.GetById(userId, listId)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return todo.TodoList{}, ErrListNotFound
+		}
+		return todo.TodoList{}, fmt.Errorf("get list: %w", err)
+	}
+
+	return list, nil
 }
 
 func (s *TodoListService) Delete(userId, listId int) error {
