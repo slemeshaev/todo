@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	todo "github.com/slemeshaev/todo/internal/models"
+	"github.com/slemeshaev/todo/internal/service"
 )
 
 func (h *Handler) createList(c *gin.Context) {
@@ -66,7 +68,12 @@ func (h *Handler) getListById(c *gin.Context) {
 
 	list, err := h.services.TodoList.GetById(userId, id)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		if errors.Is(err, service.ErrListNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
