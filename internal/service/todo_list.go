@@ -41,7 +41,14 @@ func (s *TodoListService) GetById(userId, listId int) (todo.TodoList, error) {
 }
 
 func (s *TodoListService) Delete(userId, listId int) error {
-	return s.repo.Delete(userId, listId)
+	if err := s.repo.Delete(userId, listId); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrListNotFound
+		}
+		return fmt.Errorf("delete list: %w", err)
+	}
+
+	return nil
 }
 
 func (s *TodoListService) Update(userId, listId int, input todo.UpdateListInput) error {
