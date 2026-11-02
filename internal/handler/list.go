@@ -118,9 +118,13 @@ func (h *Handler) deleteList(c *gin.Context) {
 		return
 	}
 
-	err = h.services.TodoList.Delete(userId, id)
-	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+	if err := h.services.TodoList.Delete(userId, id); err != nil {
+		if errors.Is(err, service.ErrListNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
