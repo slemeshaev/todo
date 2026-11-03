@@ -111,6 +111,19 @@ func (r *TodoListPostgres) Update(userId, listId int, input todo.UpdateListInput
 		todoListsTable, setQuery, usersListsTable, argId, argId+1)
 	args = append(args, listId, userId)
 
-	_, err := r.db.Exec(query, args...)
-	return err
+	res, err := r.db.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
