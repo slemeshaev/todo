@@ -56,5 +56,12 @@ func (s *TodoListService) Update(userId, listId int, input todo.UpdateListInput)
 		return err
 	}
 
-	return s.repo.Update(userId, listId, input)
+	if err := s.repo.Update(userId, listId, input); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrListNotFound
+		}
+		return fmt.Errorf("update list: %w", err)
+	}
+
+	return nil
 }
