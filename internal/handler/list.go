@@ -99,7 +99,12 @@ func (h *Handler) updateList(c *gin.Context) {
 	}
 
 	if err := h.services.TodoList.Update(userId, id, input); err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		if errors.Is(err, service.ErrListNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
