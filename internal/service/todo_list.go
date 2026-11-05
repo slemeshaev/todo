@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	ErrListNotFound = errors.New("list not found")
+	ErrListNotFound    = errors.New("list not found")
+	ErrNothingToUpdate = errors.New("nothing to update")
 )
 
 type TodoListService struct {
@@ -52,8 +53,8 @@ func (s *TodoListService) Delete(userId, listId int) error {
 }
 
 func (s *TodoListService) Update(userId, listId int, input todo.UpdateListInput) error {
-	if err := input.Validate(); err != nil {
-		return err
+	if input.Title == nil && input.Description == nil {
+		return ErrNothingToUpdate
 	}
 
 	if err := s.repo.Update(userId, listId, input); err != nil {
