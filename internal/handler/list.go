@@ -104,6 +104,11 @@ func (h *Handler) updateList(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, service.ErrNothingToUpdate) {
+			newErrorResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		newInternalErrorResponse(c, err)
 		return
 	}
