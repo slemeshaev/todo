@@ -24,7 +24,7 @@ func (h *Handler) createList(c *gin.Context) {
 
 	id, err := h.services.TodoList.Create(userId, input)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newInternalErrorResponse(c, err)
 		return
 	}
 
@@ -45,8 +45,12 @@ func (h *Handler) getAllLists(c *gin.Context) {
 
 	lists, err := h.services.TodoList.GetAll(userId)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newInternalErrorResponse(c, err)
 		return
+	}
+
+	if lists == nil {
+		lists = []todo.TodoList{}
 	}
 
 	c.JSON(http.StatusOK, getAllListsResponse{
