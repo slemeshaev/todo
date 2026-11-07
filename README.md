@@ -58,16 +58,20 @@ REST API for task management in Go: users sign up, sign in with JWT and manage t
    ```bash
    curl -s -X POST http://localhost:8000/auth/sign-up \
    -H "Content-Type: application/json" \
-   -d '{"name":"Sergey","username":"sergey","password":"secret123"}'
+   -d '{"name":"Sergey","username":"sergey","password":"secret123"}' \
+   -w "\nHTTP %{http_code}\n"
    # {"id":1}
+   # HTTP 201
    ```
 
 2. Sign-in:
    ```bash
    curl -s -X POST http://localhost:8000/auth/sign-in \
    -H "Content-Type: application/json" \
-   -d '{"username":"sergey","password":"secret123"}'
+   -d '{"username":"sergey","password":"secret123"}' \
+   -w "\nHTTP %{http_code}\n"
    # {"token":"eyJ..."}  — copy the token
+   # HTTP 200
    ```
 
 3. Save the token:
@@ -77,8 +81,10 @@ REST API for task management in Go: users sign up, sign in with JWT and manage t
 
 4. Get lists:
    ```bash
-   curl -s http://localhost:8000/api/lists/ -H "Authorization: Bearer $TOKEN"
-   # {"data":null}
+   curl -s http://localhost:8000/api/lists/ -H "Authorization: Bearer $TOKEN" \
+   -w "\nHTTP %{http_code}\n"
+   # {"data":[]}
+   # HTTP 200
    ```
 
 API docs: http://localhost:8000/swagger/index.html
