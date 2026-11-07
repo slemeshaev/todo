@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	todo "github.com/slemeshaev/todo/internal/models"
+	"github.com/slemeshaev/todo/internal/service"
 )
 
 func (h *Handler) createList(c *gin.Context) {
@@ -22,11 +24,11 @@ func (h *Handler) createList(c *gin.Context) {
 
 	id, err := h.services.TodoList.Create(userId, input)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newInternalErrorResponse(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]interface{}{
+	c.JSON(http.StatusCreated, map[string]any{
 		"id": id,
 	})
 }
@@ -43,8 +45,12 @@ func (h *Handler) getAllLists(c *gin.Context) {
 
 	lists, err := h.services.TodoList.GetAll(userId)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newInternalErrorResponse(c, err)
 		return
+	}
+
+	if lists == nil {
+		lists = []todo.TodoList{}
 	}
 
 	c.JSON(http.StatusOK, getAllListsResponse{
@@ -66,7 +72,12 @@ func (h *Handler) getListById(c *gin.Context) {
 
 	list, err := h.services.TodoList.GetById(userId, id)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		if errors.Is(err, service.ErrListNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
@@ -92,7 +103,17 @@ func (h *Handler) updateList(c *gin.Context) {
 	}
 
 	if err := h.services.TodoList.Update(userId, id, input); err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		if errors.Is(err, service.ErrListNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		if errors.Is(err, service.ErrNothingToUpdate) {
+			newErrorResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
@@ -111,13 +132,15 @@ func (h *Handler) deleteList(c *gin.Context) {
 		return
 	}
 
-	err = h.services.TodoList.Delete(userId, id)
-	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+	if err := h.services.TodoList.Delete(userId, id); err != nil {
+		if errors.Is(err, service.ErrListNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, statusResponse{
-		Status: "ok",
-	})
+	c.Status(http.StatusNoContent)
 }

@@ -1,8 +1,16 @@
 package service
 
 import (
+	"errors"
+	"fmt"
+
 	todo "github.com/slemeshaev/todo/internal/models"
 	"github.com/slemeshaev/todo/internal/repository"
+)
+
+var (
+	ErrListNotFound    = errors.New("list not found")
+	ErrNothingToUpdate = errors.New("nothing to update")
 )
 
 type TodoListService struct {
@@ -22,17 +30,39 @@ func (s *TodoListService) GetAll(userId int) ([]todo.TodoList, error) {
 }
 
 func (s *TodoListService) GetById(userId, listId int) (todo.TodoList, error) {
-	return s.repo.GetById(userId, listId)
+	list, err := s.repo.GetById(userId, listId)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return todo.TodoList{}, ErrListNotFound
+		}
+		return todo.TodoList{}, fmt.Errorf("get list: %w", err)
+	}
+
+	return list, nil
 }
 
 func (s *TodoListService) Delete(userId, listId int) error {
-	return s.repo.Delete(userId, listId)
+	if err := s.repo.Delete(userId, listId); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrListNotFound
+		}
+		return fmt.Errorf("delete list: %w", err)
+	}
+
+	return nil
 }
 
 func (s *TodoListService) Update(userId, listId int, input todo.UpdateListInput) error {
-	if err := input.Validate(); err != nil {
-		return err
+	if input.Title == nil && input.Description == nil {
+		return ErrNothingToUpdate
 	}
 
-	return s.repo.Update(userId, listId, input)
+	if err := s.repo.Update(userId, listId, input); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrListNotFound
+		}
+		return fmt.Errorf("update list: %w", err)
+	}
+
+	return nil
 }
