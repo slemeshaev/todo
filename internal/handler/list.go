@@ -142,7 +142,5 @@ func (h *Handler) deleteList(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, statusResponse{
-		Status: "ok",
-	})
+	c.Status(http.StatusNoContent)
 }
