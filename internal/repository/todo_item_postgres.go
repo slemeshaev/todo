@@ -76,7 +76,7 @@ func (r *TodoItemPostgres) Delete(userId, itemId int) error {
 
 func (r *TodoItemPostgres) Update(userId, itemId int, input todo.UpdateItemInput) error {
 	setValues := make([]string, 0)
-	args := make([]interface{}, 0)
+	args := make([]any, 0)
 	argId := 1
 
 	if input.Title != nil {
