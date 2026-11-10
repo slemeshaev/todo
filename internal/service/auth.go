@@ -14,9 +14,14 @@ import (
 const tokenTTL = 12 * time.Hour
 
 var (
+	// ErrInvalidCredentials is returned when the username does not exist or the password does not match.
+	// Both cases return the same error on purpose, so that callers cannot tell which usernames exist.
 	ErrInvalidCredentials = errors.New("invalid username or password")
-	ErrUsernameTaken      = errors.New("username already taken")
-	dummyHash             = mustHash("")
+
+	// ErrUsernameTaken is returned on sign-up when the username is already registered.
+	ErrUsernameTaken = errors.New("username already taken")
+
+	dummyHash = mustHash("")
 )
 
 type AuthService struct {

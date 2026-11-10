@@ -8,7 +8,10 @@ import (
 )
 
 var (
-	ErrNotFound  = errors.New("not found")
+	// ErrNotFound is returned when the record does not exist or belongs to another user.
+	ErrNotFound = errors.New("not found")
+
+	// ErrDuplicate is returned when a record with the same unique value already exists.
 	ErrDuplicate = errors.New("already exists")
 )
 

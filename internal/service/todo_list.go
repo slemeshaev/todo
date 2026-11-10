@@ -9,7 +9,10 @@ import (
 )
 
 var (
-	ErrListNotFound    = errors.New("list not found")
+	// ErrListNotFound is returned when the list does not exist or belongs to another user.
+	ErrListNotFound = errors.New("list not found")
+
+	// ErrNothingToUpdate is returned when the update request sets no fields.
 	ErrNothingToUpdate = errors.New("nothing to update")
 )
 
