@@ -70,8 +70,22 @@ func (r *TodoItemPostgres) Delete(userId, itemId int) error {
 	query := fmt.Sprintf(`DELETE FROM %s ti USING %s li, %s ul 
 		WHERE ti.id = li.item_id AND li.list_id = ul.list_id AND ul.user_id = $1 AND ti.id = $2`,
 		todoItemsTable, listItemsTable, usersListsTable)
-	_, err := r.db.Exec(query, userId, itemId)
-	return err
+
+	res, err := r.db.Exec(query, userId, itemId)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
 
 func (r *TodoItemPostgres) Update(userId, itemId int, input todo.UpdateItemInput) error {
@@ -103,6 +117,19 @@ func (r *TodoItemPostgres) Update(userId, itemId int, input todo.UpdateItemInput
 		todoItemsTable, setQuery, listItemsTable, usersListsTable, argId, argId+1)
 	args = append(args, userId, itemId)
 
-	_, err := r.db.Exec(query, args...)
-	return err
+	res, err := r.db.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
