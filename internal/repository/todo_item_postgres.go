@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -59,11 +61,13 @@ func (r *TodoItemPostgres) GetById(userId, itemId int) (todo.TodoItem, error) {
 	query := fmt.Sprintf(`SELECT ti.id, ti.title, ti.description, ti.done FROM %s ti INNER JOIN %s li on li.item_id = ti.id 
 		INNER JOIN %s ul on ul.list_id = li.list_id WHERE ti.id = $1 AND ul.user_id = $2`,
 		todoItemsTable, listItemsTable, usersListsTable)
-	if err := r.db.Get(&item, query, itemId, userId); err != nil {
-		return item, err
+
+	err := r.db.Get(&item, query, itemId, userId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return todo.TodoItem{}, ErrNotFound
 	}
 
-	return item, nil
+	return item, err
 }
 
 func (r *TodoItemPostgres) Delete(userId, itemId int) error {
