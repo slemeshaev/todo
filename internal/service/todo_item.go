@@ -1,8 +1,15 @@
 package service
 
 import (
+	"errors"
+
 	todo "github.com/slemeshaev/todo/internal/models"
 	"github.com/slemeshaev/todo/internal/repository"
+)
+
+var (
+	// ErrItemNotFound is returned when the item does not exist or does not belong to the user.
+	ErrItemNotFound = errors.New("item is not found")
 )
 
 type TodoItemService struct {
@@ -17,7 +24,7 @@ func NewTodoItemService(repo repository.TodoItem, listRepo repository.TodoList) 
 func (s *TodoItemService) Create(userId, listId int, item todo.TodoItem) (int, error) {
 	_, err := s.listRepo.GetById(userId, listId)
 	if err != nil {
-		// list does not exists or does not belongs to user
+		// list does not exist or does not belong to user
 		return 0, err
 	}
 
@@ -29,7 +36,13 @@ func (s *TodoItemService) GetAll(userId, listId int) ([]todo.TodoItem, error) {
 }
 
 func (s *TodoItemService) GetById(userId, itemId int) (todo.TodoItem, error) {
-	return s.repo.GetById(userId, itemId)
+	item, err := s.repo.GetById(userId, itemId)
+	if errors.Is(err, repository.ErrNotFound) {
+		// item does not exist or does not belong to user
+		return todo.TodoItem{}, ErrItemNotFound
+	}
+
+	return item, err
 }
 
 func (s *TodoItemService) Delete(userId, itemId int) error {
