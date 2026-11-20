@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	todo "github.com/slemeshaev/todo/internal/models"
+	"github.com/slemeshaev/todo/internal/service"
 )
 
 func (h *Handler) createItem(c *gin.Context) {
@@ -72,7 +74,12 @@ func (h *Handler) getItemById(c *gin.Context) {
 
 	item, err := h.services.TodoItem.GetById(userId, itemId)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		if errors.Is(err, service.ErrItemNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
