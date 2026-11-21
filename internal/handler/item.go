@@ -105,7 +105,12 @@ func (h *Handler) updateItem(c *gin.Context) {
 	}
 
 	if err := h.services.TodoItem.Update(userId, itemId, input); err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		if errors.Is(err, service.ErrItemNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
