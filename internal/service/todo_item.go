@@ -46,7 +46,13 @@ func (s *TodoItemService) GetById(userId, itemId int) (todo.TodoItem, error) {
 }
 
 func (s *TodoItemService) Delete(userId, itemId int) error {
-	return s.repo.Delete(userId, itemId)
+	err := s.repo.Delete(userId, itemId)
+	if errors.Is(err, repository.ErrNotFound) {
+		// item does not exist or does not belong to user
+		return ErrItemNotFound
+	}
+
+	return err
 }
 
 func (s *TodoItemService) Update(userId, itemId int, input todo.UpdateItemInput) error {

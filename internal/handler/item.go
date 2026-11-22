@@ -129,9 +129,13 @@ func (h *Handler) deleteItem(c *gin.Context) {
 		return
 	}
 
-	err = h.services.TodoItem.Delete(userId, itemId)
-	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+	if err := h.services.TodoItem.Delete(userId, itemId); err != nil {
+		if errors.Is(err, service.ErrItemNotFound) {
+			newErrorResponse(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		newInternalErrorResponse(c, err)
 		return
 	}
 
