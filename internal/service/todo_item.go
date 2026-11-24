@@ -25,6 +25,10 @@ func (s *TodoItemService) Create(userId, listId int, item todo.TodoItem) (int, e
 	_, err := s.listRepo.GetById(userId, listId)
 	if err != nil {
 		// list does not exist or does not belong to user
+		if errors.Is(err, repository.ErrNotFound) {
+			return 0, ErrListNotFound
+		}
+
 		return 0, err
 	}
 
