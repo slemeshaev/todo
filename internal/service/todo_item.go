@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 
 	todo "github.com/slemeshaev/todo/internal/models"
 	"github.com/slemeshaev/todo/internal/repository"
@@ -60,11 +61,18 @@ func (s *TodoItemService) Delete(userId, itemId int) error {
 }
 
 func (s *TodoItemService) Update(userId, itemId int, input todo.UpdateItemInput) error {
-	err := s.repo.Update(userId, itemId, input)
-	if errors.Is(err, repository.ErrNotFound) {
-		// item does not exist or does not belong to user
-		return ErrItemNotFound
+	if input.Title == nil && input.Description == nil && input.Done == nil {
+		return ErrNothingToUpdate
 	}
 
-	return err
+	if err := s.repo.Update(userId, itemId, input); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			// item does not exist or does not belong to user
+			return ErrItemNotFound
+		}
+
+		return fmt.Errorf("update item: %w", err)
+	}
+
+	return nil
 }
