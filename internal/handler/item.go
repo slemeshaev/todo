@@ -39,7 +39,7 @@ func (h *Handler) createItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]any{
+	c.JSON(http.StatusCreated, map[string]any{
 		"id": id,
 	})
 }
